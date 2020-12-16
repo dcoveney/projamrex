@@ -1457,12 +1457,12 @@ Projamrex::updateDensity(const FArrayBox& flux, FArrayBox& S_fab, const Box& bx,
 Real
 Projamrex::upwind(const Real uL, const Real uR, const Real vel)
 {
-    if(vel > 1.0e-8)
+    if(vel > 0.0)
     {
         return uL;
 
     }
-    else if(vel < -1.0e-8)
+    else if(vel < 0.0)
     {
         return uR;
     }

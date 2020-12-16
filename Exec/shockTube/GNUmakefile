@@ -17,6 +17,6 @@ USE_MPI    = TRUE
 USE_OMP    = FALSE
 
 Bpack   := ./Make.package 
-Blocs   := . 
+Blocs   := .
 
 include ../Make.projamrex
