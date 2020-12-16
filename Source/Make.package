@@ -1,0 +1,5 @@
+CEXE_sources += projamrex.cpp LevelBldAdv.cpp main.cpp
+
+CEXE_headers += projamrex.H
+
+FEXE_headers += Adv_F.H

@@ -1,0 +1,5 @@
+f90EXE_sources += Adv_$(DIM)d.f90
+f90EXE_source += generalFunctions.f90
+f90EXE_source += timeStep_$(DIM)d.f90
+f90EXE_sources += slope_$(DIM)d.f90
+f90EXE_sources += compute_flux_$(DIM)d.f90
