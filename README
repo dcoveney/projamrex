@@ -1,13 +1,12 @@
-Advection_AmrLevel: This tutorial contains an AMR advection code that advects a single 
-scalar field with a velocity field that is specified on faces.
+Projamrex: A projection code for the incompressible viscous Navier-Stokes equations.
 
-It is an AMReX based code designed to run in parallel using MPI/OMP.
+It is based on the AMReX suite of codes - in particular AMReX, IAMR, and Incflo (see https://github.com/AMReX-Codes).
 
 This example uses source code from the amrex/Src/Base, Boundary, AmrCore , and
-Amr directories.
+Amr directories as well as some routines from IAMR and Incflo.
 
-The directories Exec/SingleVortex and Exec/UniformVelocity each include 
-a makefile and a sample inputs file.  
+The directory Exec/tests2d includes a makefile and a sample inputs file.  
+
 Plotfiles are generated that can be viewed with amrvis2d / amrvis3d
 (CCSE's native vis / spreadsheet tool, downloadable separately from ccse.lbl.gov)
 or with VisIt.

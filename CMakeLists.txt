@@ -4,15 +4,6 @@ endif ()
 
 
 #
-# This test works for both 2D and 3D builds
-# There are two different tutorials here:
-#
-# 1) Single Vortex
-# 2) Uniform Velocity
-#
-
-
-#
 # Sources common to both cases
 #
 set(_sources Adv_F.H  projamrex.cpp  projamrex.H projection.cpp LevelBldAdv.cpp  main.cpp)
@@ -30,7 +21,7 @@ list(TRANSFORM _sources PREPEND Source/)
 # Single Vortex tutorial ------------------------------------------------------
 #
 ###############################################################################
-set(_sv_exe_dir Exec/shockTube/)
+set(_sv_exe_dir Exec/tests2d/)
 
 set(_sv_sources face_velocity_${AMReX_SPACEDIM}d.f90  Prob.f90 PROB_2D.F90)
 list(TRANSFORM _sv_sources PREPEND ${_sv_exe_dir})
