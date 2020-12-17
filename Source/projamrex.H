@@ -150,6 +150,8 @@ public:
 
     void doMacProjection(amrex::Array<amrex::MultiFab, AMREX_SPACEDIM>& vel);
 
+    void fillphysbc_velocity (int lev, amrex::Real time, amrex::MultiFab& vel, int ng);
+
     amrex::Array<amrex::LinOpBCType,AMREX_SPACEDIM>
     fetchBCsForProjection (amrex::Orientation::Side side) const noexcept;
 
@@ -233,6 +235,7 @@ public:
 
     static int  NUM_STATE;
     static int  NUM_GROW;
+    static amrex::BCRec       phys_bc;
 
 protected:
 
@@ -262,23 +265,24 @@ protected:
     static int          do_reflux;
     static int          num_state_type;
     static int          m_ntrac;
+    static int          testNumber;
 
     enum struct BC
     {
         noSlipWall, slipWall, periodic, undefined
     };
 
-    amrex::Array<BC, 2*AMREX_SPACEDIM> m_bc_type;
-    amrex::Array<amrex::Real, 2*AMREX_SPACEDIM> m_bc_press;
-    amrex::Array<amrex::Real, 2*AMREX_SPACEDIM> m_bc_den;
-    amrex::Array<amrex::Array<amrex::Real, AMREX_SPACEDIM>,
+     amrex::Array<BC, 2*AMREX_SPACEDIM> m_bc_type;
+     amrex::Array<amrex::Real, 2*AMREX_SPACEDIM> m_bc_press;
+     amrex::Array<amrex::Real, 2*AMREX_SPACEDIM> m_bc_den;
+     amrex::Array<amrex::Array<amrex::Real, AMREX_SPACEDIM>,
                             2*AMREX_SPACEDIM> m_bc_vel;
-    amrex::GpuArray<amrex::Vector<amrex::Real> , AMREX_SPACEDIM*2> m_bc_trac;
+     amrex::Array<amrex::Vector<amrex::Real> , AMREX_SPACEDIM*2> m_bc_trac;
 
-    amrex::Vector<amrex::BCRec> m_bcrec_vel;
-    amrex::Vector<amrex::BCRec> m_bcrec_den;
-    amrex::Vector<amrex::BCRec> m_bcrec_trac;
-    amrex::Vector<amrex::BCRec> m_bcrec_press;
+     amrex::Vector<amrex::BCRec> m_bcrec_vel;
+     amrex::Vector<amrex::BCRec> m_bcrec_den;
+     amrex::Vector<amrex::BCRec> m_bcrec_trac;
+     amrex::Vector<amrex::BCRec> m_bcrec_press;
 
 #ifdef AMREX_PARTICLES
     void init_particles ();

@@ -9,11 +9,11 @@ struct ProjVelFill
 {
 
   int probtype;
-  amrex::GpuArray<amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>, AMREX_SPACEDIM*2> bcv;
+  amrex::Array<amrex::Array<amrex::Real, AMREX_SPACEDIM>, AMREX_SPACEDIM*2> bcv;
 
   AMREX_GPU_HOST
-  constexpr IncfloVelFill (int a_probtype,
-                           amrex::GpuArray<amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>,
+  constexpr ProjVelFill (int a_probtype,
+                           amrex::Array<amrex::Array<amrex::Real, AMREX_SPACEDIM>,
                                            AMREX_SPACEDIM*2> const& a_bcv)
       : probtype(a_probtype), bcv(a_bcv) {}
 
@@ -63,10 +63,10 @@ struct ProjVelFill
 struct ProjDenFill
 {
     int probtype;
-    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM*2> bcv;
+    amrex::Array<amrex::Real,AMREX_SPACEDIM*2> bcv;
 
     AMREX_GPU_HOST
-    constexpr ProjDenFill (int a_probtype, amrex::GpuArray<amrex::Real, AMREX_SPACEDIM*2> const& a_bcv)
+    constexpr ProjDenFill (int a_probtype, amrex::Array<amrex::Real, AMREX_SPACEDIM*2> const& a_bcv)
         : probtype(a_probtype), bcv(a_bcv) {}
 
     AMREX_GPU_DEVICE

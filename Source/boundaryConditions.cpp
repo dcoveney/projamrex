@@ -6,7 +6,7 @@
 
 using namespace amrex;
 
-void Projamrex::initBCs()
+void Projamrex::initBCs ()
 {
     /* ====== BC TYPES ======
         0: Periodic

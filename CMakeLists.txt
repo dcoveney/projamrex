@@ -30,9 +30,9 @@ list(TRANSFORM _sources PREPEND Source/)
 # Single Vortex tutorial ------------------------------------------------------
 #
 ###############################################################################
-set(_sv_exe_dir Exec/SingleVortex/)
+set(_sv_exe_dir Exec/shockTube/)
 
-set(_sv_sources face_velocity_${AMReX_SPACEDIM}d.f90  Prob.f90)
+set(_sv_sources face_velocity_${AMReX_SPACEDIM}d.f90  Prob.f90 PROB_2D.F90)
 list(TRANSFORM _sv_sources PREPEND ${_sv_exe_dir})
 list(APPEND _sv_sources ${_sources})
 
@@ -55,7 +55,7 @@ unset(_sv_exe_dir)
 ###############################################################################
 set(_uv_exe_dir Exec/UniformVelocity/)
 
-set(_uv_sources face_velocity_${AMReX_SPACEDIM}d.f90  Prob.f90 probdata.f90)
+set(_uv_sources face_velocity_${AMReX_SPACEDIM}d.f90  Prob.f90 probdata.f90 PROB_2D.F90)
 list(TRANSFORM _uv_sources PREPEND ${_uv_exe_dir})
 list(APPEND _uv_sources ${_sources})
 

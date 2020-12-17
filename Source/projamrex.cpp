@@ -5,12 +5,11 @@
 #include <AMReX_TagBox.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Utility.H>
-#include <projection.cpp>
-#include <macprojection.cpp>
-#include <boundaryConditions.cpp>
 #include <AMReX_AmrCore.H>
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_iMultiFab.H>
+#include <PROB_NS_F.H>
+#include <NS_BC.H>
 #include <AMReX_Math.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_MLNodeLaplacian.H>
@@ -27,6 +26,9 @@ int      Projamrex::NUM_GROW        = 4;  // number of ghost cells
 int      Projamrex::num_state_type  = 2;  // number of state types: state, pressure
 Real     Projamrex::mu              = 0.0;
 int      Projamrex::m_ntrac         = 1;
+int      Projamrex::testNumber      = 0;
+BCRec    Projamrex::phys_bc;
+
 
 std::string probType                = "";
 int    Nstate                          = 5;
@@ -37,7 +39,6 @@ int    Yvel                            = 2;
 int    Trac                            = 3;
 int    magvort                        = 4;
 int    Press                           = 0;
-
 
 
 
@@ -52,6 +53,7 @@ int Projamrex::do_tracers                       =  0;
 Projamrex::Projamrex ()
 {
     flux_reg = 0;
+
 }
 
 //
@@ -66,9 +68,11 @@ Projamrex::Projamrex (Amr&            papa,
     :
     AmrLevel(papa,lev,level_geom,bl,dm,time)
 {
+
     flux_reg = 0;
     if (level > 0 && do_reflux)
         flux_reg = new FluxRegister(grids,dmap,crse_ratio,level,NUM_STATE);
+
 }
 
 //
@@ -77,6 +81,126 @@ Projamrex::Projamrex (Amr&            papa,
 Projamrex::~Projamrex ()
 {
     delete flux_reg;
+}
+
+
+static
+void
+set_x_vel_bc (BCRec&       bc,
+              const BCRec& phys_bc)
+{
+    const int* lo_bc = phys_bc.lo();
+    const int* hi_bc = phys_bc.hi();
+    bc.setLo(0,norm_vel_bc[lo_bc[0]]);
+    bc.setHi(0,norm_vel_bc[hi_bc[0]]);
+    bc.setLo(1,tang_vel_bc[lo_bc[1]]);
+    bc.setHi(1,tang_vel_bc[hi_bc[1]]);
+#if (BL_SPACEDIM == 3)
+    bc.setLo(2,tang_vel_bc[lo_bc[2]]);
+    bc.setHi(2,tang_vel_bc[hi_bc[2]]);
+#endif
+}
+
+static
+void
+set_y_vel_bc (BCRec&       bc,
+              const BCRec& phys_bc)
+{
+    const int* lo_bc = phys_bc.lo();
+    const int* hi_bc = phys_bc.hi();
+    bc.setLo(0,tang_vel_bc[lo_bc[0]]);
+    bc.setHi(0,tang_vel_bc[hi_bc[0]]);
+    bc.setLo(1,norm_vel_bc[lo_bc[1]]);
+    bc.setHi(1,norm_vel_bc[hi_bc[1]]);
+#if (BL_SPACEDIM == 3)
+    bc.setLo(2,tang_vel_bc[lo_bc[2]]);
+    bc.setHi(2,tang_vel_bc[hi_bc[2]]);
+#endif
+}
+
+#if (BL_SPACEDIM == 3)
+static
+void
+set_z_vel_bc (BCRec&       bc,
+              const BCRec& phys_bc)
+{
+    const int* lo_bc = phys_bc.lo();
+    const int* hi_bc = phys_bc.hi();
+    bc.setLo(0,tang_vel_bc[lo_bc[0]]);
+    bc.setHi(0,tang_vel_bc[hi_bc[0]]);
+    bc.setLo(1,tang_vel_bc[lo_bc[1]]);
+    bc.setHi(1,tang_vel_bc[hi_bc[1]]);
+    bc.setLo(2,norm_vel_bc[lo_bc[2]]);
+    bc.setHi(2,norm_vel_bc[hi_bc[2]]);
+}
+#endif
+
+static
+void
+set_scalar_bc (BCRec&       bc,
+               const BCRec& phys_bc)
+{
+    const int* lo_bc = phys_bc.lo();
+    const int* hi_bc = phys_bc.hi();
+    for (int i = 0; i < BL_SPACEDIM; i++)
+    {
+        bc.setLo(i,scalar_bc[lo_bc[i]]);
+        bc.setHi(i,scalar_bc[hi_bc[i]]);
+    }
+}
+
+static
+void
+set_temp_bc (BCRec&       bc,
+             const BCRec& phys_bc)
+{
+    const int* lo_bc = phys_bc.lo();
+    const int* hi_bc = phys_bc.hi();
+    for (int i = 0; i < BL_SPACEDIM; i++)
+    {
+        bc.setLo(i,temp_bc[lo_bc[i]]);
+        bc.setHi(i,temp_bc[hi_bc[i]]);
+    }
+}
+
+static
+void
+set_pressure_bc (BCRec&       bc,
+                 const BCRec& phys_bc)
+{
+    const int* lo_bc = phys_bc.lo();
+    const int* hi_bc = phys_bc.hi();
+    for (int i = 0; i < BL_SPACEDIM; i++)
+    {
+        bc.setLo(i,press_bc[lo_bc[i]]);
+        bc.setHi(i,press_bc[hi_bc[i]]);
+    }
+}
+
+static
+void
+set_divu_bc(BCRec& bc, const BCRec& phys_bc)
+{
+    const int* lo_bc = phys_bc.lo();
+    const int* hi_bc = phys_bc.hi();
+    for (int i = 0; i < BL_SPACEDIM; i++)
+    {
+        bc.setLo(i,divu_bc[lo_bc[i]]);
+        bc.setHi(i,divu_bc[hi_bc[i]]);
+    }
+}
+
+static
+void
+set_dsdt_bc(BCRec& bc, const BCRec& phys_bc)
+{
+    const int* lo_bc = phys_bc.lo();
+    const int* hi_bc = phys_bc.hi();
+    for (int i = 0; i < BL_SPACEDIM; i++)
+    {
+        bc.setLo(i,dsdt_bc[lo_bc[i]]);
+        bc.setHi(i,dsdt_bc[hi_bc[i]]);
+    }
 }
 
 //
@@ -140,6 +264,7 @@ Projamrex::variableSetUp ()
     // Get options, set phys_bc
     // read_params();
     ParmParse pp_init("init");
+    pp_init.query("testNumber", testNumber);
     pp_init.query("vel_visc_coef", mu);
     pp_init.query("probType", probType);
     desc_lst.addDescriptor(State_Type,IndexType::TheCellType(),
@@ -149,28 +274,42 @@ Projamrex::variableSetUp ()
                            StateDescriptor::Interval,1,1,
 			   &node_bilinear_interp,true);
 
-   int lo_bc[BL_SPACEDIM];
-   int hi_bc[BL_SPACEDIM];
-   for (int i = 0; i < BL_SPACEDIM; ++i)
-    {
-	lo_bc[i] = hi_bc[i] = BCType::int_dir;   // transmissive boundaries
+   Vector<int> lo_bc(AMREX_SPACEDIM), hi_bc(AMREX_SPACEDIM);
+   pp_init.getarr("lo_bc",lo_bc,0,AMREX_SPACEDIM);
+   pp_init.getarr("hi_bc",hi_bc,0,AMREX_SPACEDIM);
+   for (int i = 0; i < AMREX_SPACEDIM; i++)
+   {
+       phys_bc.setLo(i,lo_bc[i]);
+       phys_bc.setHi(i,hi_bc[i]);
    }
 
-   BCRec bc(lo_bc, hi_bc);
-    // initBCs();
+        BCRec bc;
+
+        set_scalar_bc(bc,phys_bc);
+
 
         desc_lst.setComponent(State_Type, Density, "density", bc,
-                  StateDescriptor::BndryFunc(phifill));
+                  BndryFunc(FORT_DENFILL));
+
+        set_x_vel_bc(bc,phys_bc);
+
         desc_lst.setComponent(State_Type, Xvel, "vel_x", bc,
-                  BndryFunc(phifill));
+                  BndryFunc(FORT_XVELFILL));
+
+        set_y_vel_bc(bc,phys_bc);
         desc_lst.setComponent(State_Type, Yvel, "vel_y", bc,
-                  BndryFunc(phifill));
+                  BndryFunc(FORT_YVELFILL));
+
+         set_scalar_bc(bc,phys_bc);
+
         desc_lst.setComponent(State_Type, Trac, "tracer", bc,
-                  BndryFunc(phifill));
+                  BndryFunc(FORT_ADVFILL));
       desc_lst.setComponent(State_Type, magvort, "mag_vort", bc,
-                BndryFunc(phifill));
+                BndryFunc(FORT_ADVFILL));
+        set_pressure_bc(bc,phys_bc);
+
         desc_lst.setComponent(Press_Type, Press, "pressure",bc,
-                  BndryFunc(phifill));
+                  BndryFunc(FORT_PRESFILL));
 
 
 
@@ -197,9 +336,7 @@ Projamrex::initData ()
     //
     // Loop over grids, call FORTRAN function to init with data.
     //
-    int testNumber;
-    ParmParse pp("init");
-    pp.query("testNumber", testNumber);
+
     const Real* dx  = geom.CellSize();
     const Real* prob_lo = geom.ProbLo();
     MultiFab& S_new = get_new_data(State_Type);
@@ -800,9 +937,9 @@ const FArrayBox& v_edge, const FArrayBox& u_half, const FArrayBox& v_half, FArra
                      Abort("before scalar advection update: zero density");
                  }
 
-                 den_out(i,j,k,Density) = den(i,j,k,Density) +
-                       (dt/dx[0])*(flx(i,j,k, Density)-flx(i+1,j,k, Density)) +
-                       (dt/dx[1])*(fly(i,j,k, Density)-fly(i,j+1,k, Density));
+                 den_out(i,j,k,Density) = den(i,j,k,Density) ;//+
+                       // (dt/dx[0])*(flx(i,j,k, Density)-flx(i+1,j,k, Density)) +
+                       // (dt/dx[1])*(fly(i,j,k, Density)-fly(i,j+1,k, Density));
 
                  if(den_out(i,j,k,Density)==0.0)
                  {
