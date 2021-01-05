@@ -1842,6 +1842,7 @@ contains
       else  
          x_vel = zero
       end if
+      write(*,*) "HERE" 
 
       call filcc(u,DIMS(u),domlo,domhi,dx,xlo,bc)
 
@@ -1882,7 +1883,7 @@ contains
             do i = ARG_L1(u), ARG_H1(u)
                if (probtype .eq. 10) then
 !c ::: Lid-driven cavity test case, constant velocity on top of domain
-                  u(i,j) = lid_vel
+                  u(i,j) = 1.0
                else 
                   u(i,j) = zero
                end if

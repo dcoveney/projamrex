@@ -809,6 +809,14 @@ Projamrex::initialState(FArrayBox& statein, const Box& bx,
                     stateArray(i,j,k,magvort) = 0.0;
 
                 }
+                else if(testNumber == 3)
+                {
+                    stateArray(i,j,k,Xvel) = 0.0;
+                    stateArray(i,j,k,Yvel) = 0.0;
+                    stateArray(i,j,k,Density) = 1.0;
+                    stateArray(i,j,k, Trac) = 0.0;
+                    stateArray(i,j,k, magvort) = 0.0;
+                }
             }
         }
     }
