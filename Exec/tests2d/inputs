@@ -1,15 +1,15 @@
 # ------------------  INPUTS TO MAIN PROGRAM  -------------------
-max_step = 1
+max_step = 10000
 stop_time = -1 # 1.6
 # PROBLEM SIZE & GEOMETRY
-geometry.is_periodic =  1  1
+geometry.is_periodic =  0  0
 geometry.coord_sys   =  0       # 0 => cart
 geometry.prob_lo     =  0.0 0.0 0.0
 geometry.prob_hi     =  1.0  1.0  1.0
-amr.n_cell           =  256  256   64
+amr.n_cell           =  128  128   64
 
 init.lo_bc           = 5 5
-init.hi_bc           = 5 4
+init.hi_bc           = 5 5
 
 # TIME STEP CONTROL
 adv.cfl            = 0.9     # cfl number for hyperbolic system
@@ -34,9 +34,9 @@ amr.check_int               = 50    # number of timesteps between checkpoints
 # PLOTFILES
 amr.plot_files_output = 1      # 0 will disable plot files
 amr.plot_file         = plt    # root name of plot file
-amr.plot_int          = 50     # number of timesteps between plot files
+amr.plot_int          = 100     # number of timesteps between plot files
 init.testNumber       = 3
-init.vel_visc_coef    = 0.0002
+init.vel_visc_coef    = 0.01
 
 # PROBIN FILENAME
 amr.probin_file = probin.2d.periodic_shear_layer

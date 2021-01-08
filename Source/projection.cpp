@@ -29,12 +29,39 @@ Projamrex::doNodalProjection(MultiFab& vel, MultiFab& pressure, MultiFab& S_cc, 
     // The projection is performed via vel = vel - grad(p)/rho
 
     LPInfo lp_info;
-    auto lo_bc = fetchBCsForProjection(Orientation::low);
-    auto hi_bc = fetchBCsForProjection(Orientation::high);
+
+    std::array<LinOpBCType,AMREX_SPACEDIM> mlmg_lobc;
+    std::array<LinOpBCType,AMREX_SPACEDIM> mlmg_hibc;
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+    {
+        if (parent->Geom(0).isPeriodic(idim))
+        {
+            mlmg_lobc[idim] = mlmg_hibc[idim] = LinOpBCType::Periodic;
+        }
+        else
+        {
+            if (phys_bc.lo(idim) == Outflow) {
+                mlmg_lobc[idim] = LinOpBCType::Dirichlet;
+            } else if (phys_bc.lo(idim) == Inflow) {
+                mlmg_lobc[idim] = LinOpBCType::inflow;
+            } else {
+                mlmg_lobc[idim] = LinOpBCType::Neumann;
+            }
+
+            if (phys_bc.hi(idim) == Outflow) {
+                mlmg_hibc[idim] = LinOpBCType::Dirichlet;
+            } else if (phys_bc.hi(idim) == Inflow) {
+                mlmg_hibc[idim] = LinOpBCType::inflow;
+            } else {
+                mlmg_hibc[idim] = LinOpBCType::Neumann;
+            }
+        }
+    }
+
     Real dt_inv = 1.0/dt;
 
     MLNodeLaplacian matrix({geom}, {grids}, {dmap}, lp_info);
-    matrix.setDomainBC(lo_bc, hi_bc);
+    matrix.setDomainBC(mlmg_lobc, mlmg_hibc);
     lp_info.setMaxCoarseningLevel(30);
     matrix.setGaussSeidel(true);
     matrix.setHarmonicAverage(false);

@@ -68,7 +68,7 @@ Projamrex::Projamrex (Amr&            papa,
     :
     AmrLevel(papa,lev,level_geom,bl,dm,time)
 {
-
+    // initBCs();
     flux_reg = 0;
     if (level > 0 && do_reflux)
         flux_reg = new FluxRegister(grids,dmap,crse_ratio,level,NUM_STATE);
@@ -292,7 +292,6 @@ Projamrex::variableSetUp ()
                   BndryFunc(FORT_DENFILL));
 
         set_x_vel_bc(bc,phys_bc);
-
         desc_lst.setComponent(State_Type, Xvel, "vel_x", bc,
                   BndryFunc(FORT_XVELFILL));
 

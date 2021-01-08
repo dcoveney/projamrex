@@ -1,5 +1,4 @@
-CEXE_sources += projamrex.cpp LevelBldAdv.cpp main.cpp macprojection.cpp projection.cpp 
-
-CEXE_headers += projamrex.H 
+CEXE_sources += projamrex.cpp LevelBldAdv.cpp main.cpp macprojection.cpp projection.cpp boundaryConditions.cpp
+CEXE_headers += projamrex.H
 
 FEXE_headers += Adv_F.H PROB_F.H PROB_NS_F.H

@@ -1842,7 +1842,6 @@ contains
       else  
          x_vel = zero
       end if
-      write(*,*) "HERE" 
 
       call filcc(u,DIMS(u),domlo,domhi,dx,xlo,bc)
 
@@ -1877,7 +1876,7 @@ contains
             end do
          end do
       end if            
-
+      
       if (bc(2,2).eq.EXT_DIR.and.ARG_H2(u).gt.domhi(2)) then
          do j = domhi(2)+1, ARG_H2(u)
             do i = ARG_L1(u), ARG_H1(u)

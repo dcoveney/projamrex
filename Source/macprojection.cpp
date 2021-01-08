@@ -19,6 +19,11 @@ Projamrex::fetchBCsForMacProjection (Orientation::Side side) const noexcept
     {
         r[dim] = LinOpBCType::Periodic;
     }
+    else
+    {
+        // auto bc = phys_bc[Orientation(dim,side)];
+
+    }
     }
     return r;
 }
@@ -54,7 +59,35 @@ Projamrex::doMacProjection(Array<MultiFab, AMREX_SPACEDIM>& vel)
      auto lo_bc = fetchBCsForMacProjection(Orientation::low);
      auto hi_bc = fetchBCsForMacProjection(Orientation::high);
 
-     macproj.setDomainBC(lo_bc, hi_bc);
+     std::array<LinOpBCType,AMREX_SPACEDIM> mlmg_lobc;
+     std::array<LinOpBCType,AMREX_SPACEDIM> mlmg_hibc;
+     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+     {
+         if (parent->Geom(0).isPeriodic(idim))
+         {
+             mlmg_lobc[idim] = mlmg_hibc[idim] = LinOpBCType::Periodic;
+         }
+         else
+         {
+             if (phys_bc.lo(idim) == Outflow) {
+                 mlmg_lobc[idim] = LinOpBCType::Dirichlet;
+             } else if (phys_bc.lo(idim) == Inflow) {
+                 mlmg_lobc[idim] = LinOpBCType::inflow;
+             } else {
+                 mlmg_lobc[idim] = LinOpBCType::Neumann;
+             }
+
+             if (phys_bc.hi(idim) == Outflow) {
+                 mlmg_hibc[idim] = LinOpBCType::Dirichlet;
+             } else if (phys_bc.hi(idim) == Inflow) {
+                 mlmg_hibc[idim] = LinOpBCType::inflow;
+             } else {
+                 mlmg_hibc[idim] = LinOpBCType::Neumann;
+             }
+         }
+     }
+
+     macproj.setDomainBC(mlmg_lobc, mlmg_hibc);
      macproj.setVerbose(2);
 
      // Define the relative tolerance
