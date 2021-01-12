@@ -61,32 +61,23 @@ Projamrex::doMacProjection(Array<MultiFab, AMREX_SPACEDIM>& vel)
 
      std::array<LinOpBCType,AMREX_SPACEDIM> mlmg_lobc;
      std::array<LinOpBCType,AMREX_SPACEDIM> mlmg_hibc;
-     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-     {
-         if (parent->Geom(0).isPeriodic(idim))
-         {
-             mlmg_lobc[idim] = mlmg_hibc[idim] = LinOpBCType::Periodic;
-         }
-         else
-         {
+     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+         if (geom.isPeriodic(idim)) {
+             mlmg_lobc[idim] = MLLinOp::BCType::Periodic;
+             mlmg_hibc[idim] = MLLinOp::BCType::Periodic;
+         } else {
              if (phys_bc.lo(idim) == Outflow) {
-                 mlmg_lobc[idim] = LinOpBCType::Dirichlet;
-             } else if (phys_bc.lo(idim) == Inflow) {
-                 mlmg_lobc[idim] = LinOpBCType::inflow;
+                 mlmg_lobc[idim] = MLLinOp::BCType::Dirichlet;
              } else {
-                 mlmg_lobc[idim] = LinOpBCType::Neumann;
+                 mlmg_lobc[idim] = MLLinOp::BCType::Neumann;
              }
-
              if (phys_bc.hi(idim) == Outflow) {
-                 mlmg_hibc[idim] = LinOpBCType::Dirichlet;
-             } else if (phys_bc.hi(idim) == Inflow) {
-                 mlmg_hibc[idim] = LinOpBCType::inflow;
+                 mlmg_hibc[idim] = MLLinOp::BCType::Dirichlet;
              } else {
-                 mlmg_hibc[idim] = LinOpBCType::Neumann;
+                 mlmg_hibc[idim] = MLLinOp::BCType::Neumann;
              }
          }
      }
-
      macproj.setDomainBC(mlmg_lobc, mlmg_hibc);
      macproj.setVerbose(2);
 

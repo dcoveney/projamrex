@@ -27,17 +27,20 @@ int      Projamrex::num_state_type  = 2;  // number of state types: state, press
 Real     Projamrex::mu              = 0.0;
 int      Projamrex::m_ntrac         = 1;
 int      Projamrex::testNumber      = 0;
+int      Projamrex::do_rigid        = 0;
 BCRec    Projamrex::phys_bc;
 
 
 std::string probType                = "";
-int    Nstate                          = 5;
+int    Nstate                          = 6;
 int    Npress                          = 1;
+int    NUM_SCALARS                     = 2;
 int    Density                         = 0;
 int    Xvel                            = 1;
 int    Yvel                            = 2;
 int    Trac                            = 3;
-int    magvort                        = 4;
+int    rigid                           = 4;
+int    magvort                        = 5;
 int    Press                           = 0;
 
 
@@ -267,6 +270,7 @@ Projamrex::variableSetUp ()
     pp_init.query("testNumber", testNumber);
     pp_init.query("vel_visc_coef", mu);
     pp_init.query("probType", probType);
+    pp_init.query("do_rigid", do_rigid);
     desc_lst.addDescriptor(State_Type,IndexType::TheCellType(),
                            StateDescriptor::Point,0,Nstate,
 			   &cell_cons_interp);
@@ -302,6 +306,8 @@ Projamrex::variableSetUp ()
          set_scalar_bc(bc,phys_bc);
 
         desc_lst.setComponent(State_Type, Trac, "tracer", bc,
+                  BndryFunc(FORT_ADVFILL));
+        desc_lst.setComponent(State_Type, rigid, "rigid", bc,
                   BndryFunc(FORT_ADVFILL));
       desc_lst.setComponent(State_Type, magvort, "mag_vort", bc,
                 BndryFunc(FORT_ADVFILL));
@@ -524,6 +530,38 @@ Projamrex::advance (Real time,
     if(Sborder.contains_nan())
     {
         Abort("Before advection: Sborder contains nan!");
+    }
+    if(do_rigid)
+    {
+    #ifdef _OPENMP
+    #pragma omp parallel
+    #endif
+        {
+    	for (MFIter mfi(S_new, true); mfi.isValid(); ++mfi)
+    	{
+            const Box& bx = mfi.tilebox();
+
+    	    const FArrayBox& statein = Sborder[mfi];
+    	    FArrayBox& stateout      =   S_new[mfi];
+            setRigidBodyBoundaryCondition(statein, stateout, bx);
+
+        }
+        }
+    #ifdef _OPENMP
+    #pragma omp parallel
+    #endif
+        {
+    	for (MFIter mfi(S_new, true); mfi.isValid(); ++mfi)
+    	{
+            const Box& bx = mfi.tilebox();
+
+    	    const FArrayBox& statein = Sborder[mfi];
+    	    FArrayBox& stateout      =   S_new[mfi];
+            extrapRigidBodyState(statein, stateout, bx);
+
+
+        }
+        }
     }
 #ifdef _OPENMP
 #pragma omp parallel
@@ -815,6 +853,21 @@ Projamrex::initialState(FArrayBox& statein, const Box& bx,
                     stateArray(i,j,k,Density) = 1.0;
                     stateArray(i,j,k, Trac) = 0.0;
                     stateArray(i,j,k, magvort) = 0.0;
+                }
+                else if(testNumber == 4)
+                {
+                    Vector<Real> centre(BL_SPACEDIM);
+                    Real dist, radius, adv_vel;
+                    pp.getarr("cyl_centre", centre, 0, BL_SPACEDIM);
+                    pp.query("cyl_radius", radius);
+                    pp.query("adv_vel", adv_vel);
+                    dist = sqrt((x-centre[0])*(x-centre[0])+(y-centre[1])*(y-centre[1]));
+                    stateArray(i,j,k,Xvel) = adv_vel;
+                    stateArray(i,j,k,Yvel) = 0.0;
+                    stateArray(i,j,k,Density) = 1.0;
+                    stateArray(i,j,k,Trac) = 1.0;
+                    stateArray(i,j,k,rigid) = 0.5*(1.0-tanh(5000.0*(dist-radius)));
+
                 }
             }
         }
@@ -1363,7 +1416,62 @@ Projamrex::velocityAdvection(const FArrayBox& statein, FArrayBox& stateout, FArr
     }
 }
 
+void Projamrex::setRigidBodyBoundaryCondition(const FArrayBox& statein, FArrayBox& stateout, const Box& bx)
+{
+    Array4<Real const> const& S_arr_i = statein.array();
+    Array4<Real> const& S_arr_o = stateout.array();
+    double rC, rR, rL, rU, rD;
+    Dim3 lo = lbound(bx);
+    Dim3 hi = ubound(bx);
+    for(int k = lo.z; k <= hi.z; k++)
+    {
+        for(int j = lo.y; j <= hi.y; j++)
+        {
+            for(int i = lo.x; i <= hi.x; i++)
+            {
+                rC = S_arr_i(i,j,k,rigid); rR = S_arr_i(i+1,j,k,rigid);
+                rL = S_arr_i(i-1,j,k,rigid); rU = S_arr_i(i,j+1,k,rigid);
+                rD = S_arr_i(i,j-1,k,rigid);
+                if(sgn(rC-0.5)*sgn(rR-0.5) < 0 || sgn(rC-0.5)*sgn(rL-0.5) < 0
+                    || sgn(rC-0.5)*sgn(rU-0.5) < 0 || sgn(rC-0.5)*sgn(rD-0.5) < 0)
+                {
+                    S_arr_o(i,j,k,Xvel) = 0.0;
+                    S_arr_o(i,j,k,Yvel) = 0.0;
+                }
 
+            }
+        }
+    }
+}
+
+void Projamrex::extrapRigidBodyState(const FArrayBox& statein, FArrayBox& stateout, const Box& bx)
+{
+    Array4<Real const> const& S_arr_i = statein.array();
+    Array4<Real> const& S_arr_o = stateout.array();
+    double r;
+    Dim3 lo = lbound(bx);
+    Dim3 hi = ubound(bx);
+    for(int k = lo.z; k <= hi.z; k++)
+    {
+        for(int j = lo.y; j <= hi.y; j++)
+        {
+            for(int i = lo.x; i <= hi.x; i++)
+            {
+                r = S_arr_i(i,j,k,rigid);
+                if(r > 0.5)
+                {
+                    S_arr_o(i,j,k,Xvel) = 0.0;
+                    S_arr_o(i,j,k,Yvel) = 0.0;
+                }
+            }
+        }
+    }
+}
+
+Real Projamrex::sgn(const Real x)
+{
+    return x/fabs(x);
+}
 
 // void Projamrex::advectionENO(const FArrayBox& statein, FArrayBox& stateout,const Box& bx, const Real* dx, const Real dt)
 // {

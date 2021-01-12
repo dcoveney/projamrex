@@ -135,6 +135,14 @@ public:
                  amrex::FArrayBox& flux, const amrex::Box& bx,
                  const amrex::Real* dx, int dim);
 
+
+    void setRigidBodyBoundaryCondition(const amrex::FArrayBox& statein, amrex::FArrayBox& stateout,
+        const amrex::Box& bx);
+    amrex::Real sgn(const amrex::Real x);
+
+    void extrapRigidBodyState(const amrex::FArrayBox& statein, amrex::FArrayBox& stateout,
+        const amrex::Box& bx);
+
     void computeDivergence(amrex::FArrayBox& divu, const amrex::FArrayBox& vel,
         const amrex::Box& bx, const amrex::Real* dx);
 
@@ -266,6 +274,7 @@ protected:
     static int          num_state_type;
     static int          m_ntrac;
     static int          testNumber;
+    static int          do_rigid;
 
     enum struct BC
     {
